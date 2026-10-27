@@ -1,0 +1,29 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Todo API",
+  "colors": {
+    "primary": "#F59E0B",
+    "light": "#FBBF24",
+    "dark": "#D97706"
+  },
+  "navigation": {
+    "pages": [
+      {
+        "group": "Get started",
+        "icon": "rocket",
+        "pages": ["index", "quickstart"]
+      },
+      {
+        "group": "Guides",
+        "icon": "book-open",
+        "pages": ["guides/authentication", "guides/pagination", "guides/deprecations"]
+      },
+      {
+        "group": "API reference",
+        "icon": "code",
+        "openapi": "openapi.json"
+      }
+    ]
+  }
+}

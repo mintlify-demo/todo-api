@@ -1,0 +1,35 @@
+---
+title: Authentication
+description: Authenticate every request with an API key in the X-API-Key header.
+icon: key
+---
+
+Every endpoint requires an API key. Send it in the `X-API-Key` header.
+
+```bash
+curl http://localhost:8000/todos -H "X-API-Key: demo-key"
+```
+
+<Info>
+  The demo key is `demo-key`. To use a different key, set the `TODO_API_KEY` environment variable before you start the server.
+</Info>
+
+## What happens without a key
+
+A missing or wrong key returns `401`:
+
+```json
+{ "detail": "Invalid or missing API key" }
+```
+
+## In the API playground
+
+Each endpoint page in the API reference has an **Authorization** field. Enter `demo-key` there, and the playground adds the header for you.
+
+<ParamField header="X-API-Key" type="string" required>
+  Your API key. For the demo, use `demo-key`.
+</ParamField>
+
+<Warning>
+  Never commit real API keys. This demo key is public on purpose.
+</Warning>

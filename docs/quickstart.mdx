@@ -1,0 +1,78 @@
+---
+title: Quickstart
+description: Run the Todo API locally and create, read, and finish a todo.
+icon: rocket
+---
+
+<Steps>
+  <Step title="Install and run">
+    ```bash
+    git clone https://github.com/mintlify-demo/todo-api.git
+    cd todo-api
+    python3 -m venv .venv && source .venv/bin/activate
+    pip install -r requirements.txt
+    uvicorn main:app --reload
+    ```
+  </Step>
+
+  <Step title="Create a todo">
+    Every request needs the header `X-API-Key: demo-key`.
+
+    <CodeGroup>
+      ```bash cURL
+      curl -X POST http://localhost:8000/todos \
+        -H "X-API-Key: demo-key" \
+        -H "Content-Type: application/json" \
+        -d '{"title": "Write the docs"}'
+      ```
+
+      ```python Python
+      import requests
+
+      r = requests.post(
+          "http://localhost:8000/todos",
+          headers={"X-API-Key": "demo-key"},
+          json={"title": "Write the docs"},
+      )
+      print(r.status_code, r.json())
+      ```
+
+      ```javascript JavaScript
+      const res = await fetch("http://localhost:8000/todos", {
+        method: "POST",
+        headers: { "X-API-Key": "demo-key", "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Write the docs" }),
+      });
+      console.log(res.status, await res.json());
+      ```
+    </CodeGroup>
+
+    ```json Response (201)
+    {
+      "title": "Write the docs",
+      "completed": false,
+      "id": 1,
+      "created_at": "2026-01-15T09:30:00Z"
+    }
+    ```
+  </Step>
+
+  <Step title="Mark it done">
+    ```bash
+    curl -X PATCH http://localhost:8000/todos/1 \
+      -H "X-API-Key: demo-key" \
+      -H "Content-Type: application/json" \
+      -d '{"completed": true}'
+    ```
+  </Step>
+
+  <Step title="List todos">
+    ```bash
+    curl "http://localhost:8000/todos?completed=true" -H "X-API-Key: demo-key"
+    ```
+  </Step>
+</Steps>
+
+<Check>
+  You've covered create, update, and list. Next, learn about [authentication](/todo-api/guides/authentication) and [pagination](/todo-api/guides/pagination).
+</Check>

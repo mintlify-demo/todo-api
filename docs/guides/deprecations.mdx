@@ -1,0 +1,29 @@
+---
+title: Deprecations
+description: Endpoints that still work but will be removed, and what to use instead.
+icon: triangle-exclamation
+---
+
+Deprecated endpoints keep working, but they're marked in the API reference and will be removed in a future version.
+
+| Deprecated | Use instead | Why |
+| --- | --- | --- |
+| `GET /todos/list-all` | `GET /todos` with `page` and `page_size` | It returns every todo at once, which gets slow as the list grows |
+
+## Migrate off `list-all`
+
+<Steps>
+  <Step title="Switch the path">
+    Call `GET /todos` instead of `GET /todos/list-all`.
+  </Step>
+  <Step title="Read items from the response">
+    The new response is an object. The todos are in `items`, not at the top level.
+  </Step>
+  <Step title="Loop over pages">
+    Use `total_pages` to know when to stop. See [pagination](/todo-api/guides/pagination).
+  </Step>
+</Steps>
+
+<Note>
+  In the OpenAPI spec this endpoint has `deprecated: true`, so Mintlify shows it with a deprecation marker.
+</Note>

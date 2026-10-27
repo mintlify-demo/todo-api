@@ -1,0 +1,32 @@
+# Optional: tells the central `docs` repo to re-sync when this repo's docs change.
+#
+# Only needed if you use the multirepo GitHub Action alternative (see the docs
+# repo, .github/multirepo-action-alternative/). With Mintlify's native
+# multi-repo support, Mintlify rebuilds on every push by itself.
+#
+# Needs a repository secret DOCS_DISPATCH_TOKEN (a PAT or GitHub App token with
+# contents:write on mintlify-demo/docs). If the secret is missing, this job
+# exits successfully without doing anything.
+name: Notify docs repository
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**"]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository_dispatch to mintlify-demo/docs
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::DOCS_DISPATCH_TOKEN is not set, skipping docs sync."
+            exit 0
+          fi
+          gh api repos/mintlify-demo/docs/dispatches \
+            -f event_type=docs-updated \
+            -f "client_payload[repo]=${{ github.repository }}"

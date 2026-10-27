@@ -1,0 +1,81 @@
+---
+title: Pagination
+description: Use page and page_size to walk through large lists of todos.
+icon: layer-group
+---
+
+`GET /todos` returns one page at a time. Control it with two query parameters.
+
+<ParamField query="page" type="integer" default="1">
+  The page to return, starting at `1`.
+</ParamField>
+
+<ParamField query="page_size" type="integer" default="10">
+  Items per page, from `1` to `100`.
+</ParamField>
+
+## Reading the response
+
+<ResponseField name="items" type="Todo[]">
+  The todos on this page.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  How many todos match your filter across all pages.
+</ResponseField>
+
+<ResponseField name="total_pages" type="integer">
+  How many pages there are at the current `page_size`.
+</ResponseField>
+
+```bash
+curl "http://localhost:8000/todos?page=2&page_size=5" -H "X-API-Key: demo-key"
+```
+
+```json
+{
+  "items": [],
+  "total": 8,
+  "page": 2,
+  "page_size": 5,
+  "total_pages": 2
+}
+```
+
+## Walk every page
+
+<CodeGroup>
+  ```python Python
+  import requests
+
+  page = 1
+  while True:
+      data = requests.get(
+          "http://localhost:8000/todos",
+          headers={"X-API-Key": "demo-key"},
+          params={"page": page, "page_size": 50},
+      ).json()
+      for todo in data["items"]:
+          print(todo["title"])
+      if page >= data["total_pages"]:
+          break
+      page += 1
+  ```
+
+  ```javascript JavaScript
+  let page = 1;
+  while (true) {
+    const res = await fetch(`http://localhost:8000/todos?page=${page}&page_size=50`, {
+      headers: { "X-API-Key": "demo-key" },
+    });
+    const data = await res.json();
+    data.items.forEach((todo) => console.log(todo.title));
+    if (page >= data.total_pages) break;
+    page += 1;
+  }
+  ```
+</CodeGroup>
+
+<Tip>
+  Combine pagination with the `completed` filter, for example `?completed=false&page_size=20`.
+</Tip>
