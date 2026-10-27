@@ -12,17 +12,27 @@
       {
         "group": "Get started",
         "icon": "rocket",
-        "pages": ["index", "quickstart"]
+        "pages": [
+          "index",
+          "quickstart"
+        ]
       },
       {
         "group": "Guides",
         "icon": "book-open",
-        "pages": ["guides/authentication", "guides/pagination", "guides/deprecations"]
+        "pages": [
+          "guides/authentication",
+          "guides/pagination",
+          "guides/deprecations"
+        ]
       },
       {
         "group": "API reference",
         "icon": "code",
-        "openapi": "openapi.json"
+        "openapi": {
+          "source": "openapi.json",
+          "directory": "todo-api/api-reference"
+        }
       }
     ]
   }
