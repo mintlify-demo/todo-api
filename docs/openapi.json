@@ -518,6 +518,74 @@
           }
         }
       }
+    },
+    "/todos/{todo_id}/complete": {
+      "post": {
+        "tags": [
+          "Todos"
+        ],
+        "summary": "Mark a todo as complete",
+        "description": "Mark a todo as done and record `completed_at`.\n\nSafe to call more than once: completing a todo that is already complete\nkeeps its original `completed_at`.",
+        "operationId": "completeTodo",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "todo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Todo Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Todo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No todo with that id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -639,6 +707,22 @@
             "description": "When the todo was created (UTC).",
             "examples": [
               "2026-01-15T09:30:00Z"
+            ]
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "When the todo was completed with `POST /todos/{todo_id}/complete` (UTC). `null` until then.",
+            "examples": [
+              "2026-01-16T17:05:00Z"
             ]
           }
         },
