@@ -10,6 +10,7 @@ Run it:  uvicorn main:app --reload
 import math
 import os
 from datetime import datetime, timezone
+from enum import Enum
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Response, Security, status
 from fastapi.security import APIKeyHeader
@@ -40,9 +41,18 @@ def require_api_key(key: str | None = Security(api_key_header)) -> None:
 # --------------------------------------------------------------------------- #
 
 
+class Priority(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+
+
 class TodoCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="What needs doing.", examples=["Write the docs"])
     completed: bool = Field(False, description="Whether the todo is already done.", examples=[False])
+    priority: Priority = Field(
+        Priority.medium, description="How important the todo is: `low`, `medium` (default), or `high`.", examples=["high"]
+    )
 
 
 class TodoUpdate(BaseModel):
@@ -50,6 +60,7 @@ class TodoUpdate(BaseModel):
 
     title: str | None = Field(None, min_length=1, max_length=200, description="New title.", examples=["Ship the docs"])
     completed: bool | None = Field(None, description="New completed state.", examples=[True])
+    priority: Priority | None = Field(None, description="New priority.", examples=["low"])
 
 
 class Todo(TodoCreate):
@@ -129,9 +140,14 @@ def list_todos(
     page: int = Query(1, ge=1, description="Page number, starting at 1."),
     page_size: int = Query(10, ge=1, le=100, description="Items per page (1 to 100)."),
     completed: bool | None = Query(None, description="Only return todos with this completed state."),
+    priority: Priority | None = Query(None, description="Only return todos with this priority."),
 ) -> TodoPage:
-    """Return one page of todos, oldest first. Filter with `completed`."""
-    matching = [t for t in todos.values() if completed is None or t.completed == completed]
+    """Return one page of todos, oldest first. Filter with `completed` and `priority`."""
+    matching = [
+        t
+        for t in todos.values()
+        if (completed is None or t.completed == completed) and (priority is None or t.priority == priority)
+    ]
     start = (page - 1) * page_size
     return TodoPage(
         items=matching[start : start + page_size],
@@ -201,7 +217,7 @@ def get_todo(todo_id: int) -> Todo:
     responses={**UNAUTHORIZED, **NOT_FOUND},
 )
 def update_todo(todo_id: int, body: TodoUpdate) -> Todo:
-    """Change a todo's `title` and/or `completed`. Fields you leave out are unchanged."""
+    """Change a todo's `title`, `completed`, and/or `priority`. Fields you leave out are unchanged."""
     todo = get_or_404(todo_id)
     updated = todo.model_copy(update=body.model_dump(exclude_unset=True))
     todos[todo_id] = updated
