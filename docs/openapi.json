@@ -19,7 +19,7 @@
           "Todos"
         ],
         "summary": "List todos",
-        "description": "Return one page of todos, oldest first. Filter with `completed` and `priority`.",
+        "description": "Return one page of todos, oldest first. Filter with `completed`, `priority`, and `overdue`.",
         "operationId": "listTodos",
         "security": [
           {
@@ -89,6 +89,24 @@
               "title": "Priority"
             },
             "description": "Only return todos with this priority."
+          },
+          {
+            "name": "overdue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`true` returns only incomplete todos whose `due_date` is before today (UTC).",
+              "title": "Overdue"
+            },
+            "description": "`true` returns only incomplete todos whose `due_date` is before today (UTC)."
           }
         ],
         "responses": {
@@ -370,7 +388,7 @@
           "Todos"
         ],
         "summary": "Update a todo",
-        "description": "Change a todo's `title`, `completed`, and/or `priority`. Fields you leave out are unchanged.",
+        "description": "Change a todo's `title`, `completed`, `priority`, and/or `due_date`. Fields you leave out are unchanged.",
         "operationId": "updateTodo",
         "security": [
           {
@@ -590,6 +608,22 @@
               "high"
             ]
           },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date",
+            "description": "Optional date the todo is due (YYYY-MM-DD).",
+            "examples": [
+              "2026-11-15"
+            ]
+          },
           "id": {
             "type": "integer",
             "title": "Id",
@@ -643,6 +677,22 @@
             "default": "medium",
             "examples": [
               "high"
+            ]
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date",
+            "description": "Optional date the todo is due (YYYY-MM-DD).",
+            "examples": [
+              "2026-11-15"
             ]
           }
         },
@@ -751,6 +801,22 @@
             "description": "New priority.",
             "examples": [
               "low"
+            ]
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date",
+            "description": "New due date (YYYY-MM-DD). Send `null` to clear it.",
+            "examples": [
+              "2026-11-30"
             ]
           }
         },
