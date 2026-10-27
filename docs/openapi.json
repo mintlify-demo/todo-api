@@ -19,7 +19,7 @@
           "Todos"
         ],
         "summary": "List todos",
-        "description": "Return one page of todos, oldest first. Filter with `completed`.",
+        "description": "Return one page of todos, oldest first. Filter with `completed` and `priority`.",
         "operationId": "listTodos",
         "security": [
           {
@@ -71,6 +71,24 @@
               "title": "Completed"
             },
             "description": "Only return todos with this completed state."
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Priority"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only return todos with this priority.",
+              "title": "Priority"
+            },
+            "description": "Only return todos with this priority."
           }
         ],
         "responses": {
@@ -352,7 +370,7 @@
           "Todos"
         ],
         "summary": "Update a todo",
-        "description": "Change a todo's `title` and/or `completed`. Fields you leave out are unchanged.",
+        "description": "Change a todo's `title`, `completed`, and/or `priority`. Fields you leave out are unchanged.",
         "operationId": "updateTodo",
         "security": [
           {
@@ -534,6 +552,15 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "Priority": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "Priority"
+      },
       "Todo": {
         "properties": {
           "title": {
@@ -553,6 +580,14 @@
             "default": false,
             "examples": [
               false
+            ]
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority",
+            "description": "How important the todo is: `low`, `medium` (default), or `high`.",
+            "default": "medium",
+            "examples": [
+              "high"
             ]
           },
           "id": {
@@ -600,6 +635,14 @@
             "default": false,
             "examples": [
               false
+            ]
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority",
+            "description": "How important the todo is: `low`, `medium` (default), or `high`.",
+            "default": "medium",
+            "examples": [
+              "high"
             ]
           }
         },
@@ -694,6 +737,20 @@
             "description": "New completed state.",
             "examples": [
               true
+            ]
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Priority"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "New priority.",
+            "examples": [
+              "low"
             ]
           }
         },
