@@ -4,19 +4,21 @@ description: A small CRUD API with API-key auth, pagination, and a deprecated en
 icon: list-check
 ---
 
-{user.name ? <>Welcome back, **{user.name}**.</> : <>Welcome.</>} The Todo API stores todos in memory. It's the demo to show **authentication**, **pagination**, and **deprecation** in a real API reference, plus a **GraphQL** API, a **WebSocket** event stream, and a **Python SDK** generated from code.
+{user.name ? <>Welcome back, <strong>{user.name}</strong>{user.plan ? <> (<strong>{user.plan}</strong> plan)</> : null}.</> : <>Welcome.</>} The Todo API stores todos in memory. It's the demo to show **authentication**, **pagination**, and **deprecation** in a real API reference, plus a **GraphQL** API, a **WebSocket** event stream, and a **Python SDK** generated from code.
 
-<Visibility for={{ groups: ["enterprise"] }}>
+{user.plan === "enterprise" ? (
   <Check>
-    You're on the **Enterprise** plan. Your API key is already filled in on every endpoint page, and you can use [bulk create](/todo-api/guides/enterprise-bulk-import).
+    You're on the <strong>Enterprise</strong> plan. Your key (<code>enterprise-demo-key</code>) is already filled in on every endpoint page, and you can create up to 100 todos at once with <code>POST /todos/bulk</code>.
   </Check>
-</Visibility>
-
-<Visibility for={{ groups: ["partner"] }}>
+) : user.plan === "partner" ? (
   <Info>
-    You're signed in as a **partner**. Your partner API key is filled in on every endpoint page. See [partner integrations](/todo-api/guides/partner-integrations) for the event stream.
+    You're on the <strong>Partner</strong> plan. Your key (<code>partner-demo-key</code>) is already filled in on every endpoint page. Use the <a href="/todo-api/events/overview">event stream</a> to mirror todos into your app.
   </Info>
-</Visibility>
+) : user.plan ? (
+  <Tip>
+    You're on the <strong>Standard</strong> plan. Your key (<code>demo-key</code>) is already filled in on every endpoint page. Bulk import comes with Enterprise.
+  </Tip>
+) : null}
 
 <CardGroup cols={3}>
   <Card title="Quickstart" icon="rocket" href="/todo-api/quickstart">

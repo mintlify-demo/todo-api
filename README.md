@@ -20,7 +20,7 @@ All requests need an `X-API-Key` header. The demo keys are public on purpose:
 | `partner-demo-key` | partner | `TODO_PARTNER_API_KEY` |
 | `enterprise-demo-key` | enterprise (unlocks `POST /todos/bulk`) | `TODO_ENTERPRISE_API_KEY` |
 
-Signed-in docs readers get their plan's key prefilled in the API playground by the [Info API](https://github.com/mintlify-demo/demo-info-api).
+Signed-in docs readers get their plan's key prefilled in the API playground. An Auth0 post-login Action sets it in `/userinfo`, which is Mintlify's Info API URL; see [`auth0/direct-userinfo-action.js`](https://github.com/mintlify-demo/demo-info-api/blob/main/auth0/direct-userinfo-action.js). Nothing is hosted.
 
 TODO(hosting): the API will be hosted with Mintlify's internal tooling (details TBD); until then the docs and SDK point at `http://localhost:8000`.
 

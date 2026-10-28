@@ -24,7 +24,7 @@ Each key belongs to a plan. The plan decides which endpoints the key can call.
   These demo keys are public on purpose. To use different keys, set `TODO_API_KEY`, `TODO_PARTNER_API_KEY`, and `TODO_ENTERPRISE_API_KEY` before you start the server.
 </Info>
 
-{user.name ? <Tip>Signed in as **{user.name}**: the playground on every endpoint page already has your plan's key filled in.</Tip> : null}
+{user.name ? <Tip>Signed in as <strong>{user.name}</strong>{user.plan ? <> on the <strong>{user.plan}</strong> plan</> : null}: the playground on every endpoint page already has your plan's key filled in{user.apiKey ? <> (<code>{user.apiKey}</code>)</> : null}.</Tip> : null}
 
 ## What happens without a key
 
