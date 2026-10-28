@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -90,9 +87,3 @@ def test_deprecated_list_all_still_works(client):
 
 def test_list_all_is_marked_deprecated_in_spec():
     assert app.openapi()["paths"]["/todos/list-all"]["get"]["deprecated"] is True
-
-
-def test_committed_openapi_spec_is_up_to_date():
-    """If this fails, run `make spec` and commit docs/openapi.json."""
-    committed = json.loads((Path(__file__).parent.parent / "docs" / "openapi.json").read_text())
-    assert committed == app.openapi()

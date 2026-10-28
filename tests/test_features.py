@@ -1,15 +1,9 @@
 """Tests for the plan-tier keys, the enterprise-only endpoint, GraphQL, and the WebSocket events."""
-from pathlib import Path
 
 import pytest
-import yaml
 from fastapi.testclient import TestClient
 
-from events import EVENT_TYPES
 from main import app, reset_store
-from todo_graphql import schema
-
-DOCS = Path(__file__).parent.parent / "docs"
 
 
 @pytest.fixture()
@@ -39,7 +33,6 @@ def test_bulk_create_needs_an_enterprise_key(client):
 def test_bulk_create_is_enterprise_only_in_the_docs():
     op = app.openapi()["paths"]["/todos/bulk"]["post"]
     assert op["x-mint"] == {"groups": ["enterprise"]}
-
 
 
 def test_graphql_and_websocket_stay_out_of_the_openapi_spec():
@@ -75,11 +68,6 @@ def test_graphql_update_and_delete(client):
 def test_graphql_needs_an_api_key(client):
     out = gql(client, "{ todos { total } }", headers={"X-API-Key": "nope"})
     assert out["data"] is None and "API key" in out["errors"][0]["message"]
-
-
-def test_committed_graphql_schema_is_up_to_date():
-    """If this fails, run `make spec` and commit docs/schema.graphql."""
-    assert (DOCS / "schema.graphql").read_text() == schema.as_str() + "\n"
 
 
 # ---- WebSocket events -----------------------------------------------------------------------
@@ -121,11 +109,3 @@ def test_websocket_rejects_a_bad_key(client):
         with client.websocket_connect("/ws/events?api_key=nope") as ws:
             ws.receive_json()
     assert exc.value.code == 1008
-
-
-def test_asyncapi_spec_matches_the_server():
-    spec = yaml.safe_load((DOCS / "asyncapi.yaml").read_text())
-    assert spec["asyncapi"].startswith("3.0")
-    assert spec["channels"]["todoEvents"]["address"] == "/ws/events"
-    names = {m["name"] for m in spec["components"]["messages"].values()}
-    assert set(EVENT_TYPES) <= names

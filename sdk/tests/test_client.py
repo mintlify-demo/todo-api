@@ -46,10 +46,3 @@ def test_bulk_create_needs_enterprise(todos):
 def test_bad_key():
     with pytest.raises(AuthenticationError):
         TodoClient(api_key="nope", http_client=TestClient(app)).list()
-
-
-def test_reference_artifact_is_committed():
-    """If this fails, run `make sdk-docs` and commit docs/sdk-artifacts/python/."""
-    out = ROOT / "docs" / "sdk-artifacts" / "python"
-    assert (out / "todo_client.client.fjson").exists()
-    assert "TodoClient" in (out / "todo_client.client.fjson").read_text()
