@@ -1,0 +1,38 @@
+---
+title: Bulk import (Enterprise)
+description: Create up to 100 todos in one request with an Enterprise API key.
+icon: boxes-stacked
+groups: ["enterprise"]
+---
+
+<Note>
+  Only readers in the **enterprise** group can open this page. Everyone else gets a 404, and the `POST /todos/bulk` endpoint is hidden from their API reference.
+</Note>
+
+{user.name ? <>Hi {user.name}, your</> : <>Your</>} Enterprise plan includes bulk import: send up to 100 todos in one request to [`POST /todos/bulk`](/todo-api/api-reference/todos/bulk-create-todos-enterprise).
+
+```bash
+curl -X POST http://localhost:8000/todos/bulk \
+  -H "X-API-Key: enterprise-demo-key" \
+  -H "Content-Type: application/json" \
+  -d '{"items": [{"title": "Migrate the docs"}, {"title": "Turn on SSO", "completed": true}]}'
+```
+
+The response is the list of created todos, in the order you sent them.
+
+## Errors
+
+| Status | When |
+| --- | --- |
+| `401` | The API key is missing or wrong. |
+| `403` | The key works but isn't an Enterprise key. |
+| `422` | `items` is empty, has more than 100 entries, or a title is invalid. |
+
+## From Python
+
+```python
+from todo_client import TodoClient
+
+with TodoClient(api_key="enterprise-demo-key") as todos:
+    created = todos.bulk_create(["Migrate the docs", "Turn on SSO"])
+```

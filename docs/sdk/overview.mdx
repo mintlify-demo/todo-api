@@ -1,0 +1,25 @@
+---
+title: Python SDK
+description: Use the todo-client package, with a reference generated from its docstrings by Sphinx.
+icon: python
+---
+
+`todo-client` is a small Python client for the Todo API. It lives in the [`sdk/` folder](https://github.com/mintlify-demo/todo-api/tree/main/sdk) of this repo.
+
+```bash
+pip install "git+https://github.com/mintlify-demo/todo-api.git#subdirectory=sdk"
+```
+
+```python
+from todo_client import TodoClient
+
+with TodoClient(api_key="demo-key") as todos:
+    todo = todos.create("Write the docs")
+    todos.complete(todo.id)
+    for item in todos.iter_all():
+        print(item.title, item.completed)
+```
+
+## How this reference is built
+
+The pages below come from the SDK's docstrings. Sphinx builds them to JSON (`make sdk-docs`), the output is committed at `docs/sdk-artifacts/python/`, and Mintlify turns it into a page per module, class, and function.

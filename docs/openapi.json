@@ -3,7 +3,7 @@
   "info": {
     "title": "Todo API",
     "summary": "A tiny in-memory todo list with API-key auth.",
-    "description": "Create, read, update and delete todos. Data is kept in memory and resets when the server restarts.\n\nAll endpoints need an `X-API-Key` header. Use `demo-key` when running the demo locally.",
+    "description": "Create, read, update and delete todos. Data is kept in memory and resets when the server restarts.\n\nAll endpoints need an `X-API-Key` header. Use `demo-key` for the demo.",
     "version": "1.0.0"
   },
   "servers": [
@@ -202,6 +202,82 @@
             "APIKeyHeader": []
           }
         ]
+      }
+    },
+    "/todos/bulk": {
+      "post": {
+        "tags": [
+          "Todos"
+        ],
+        "summary": "Bulk create todos (Enterprise)",
+        "description": "Create up to 100 todos in one request. **Enterprise plan only:** send an enterprise API key\n(`enterprise-demo-key` in the demo), or the API returns `403`.",
+        "operationId": "bulkCreateTodos",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Todo"
+                  },
+                  "type": "array",
+                  "title": "Response Bulkcreatetodos"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your API key's plan can't use this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "x-mint": {
+          "groups": [
+            "enterprise"
+          ]
+        }
       }
     },
     "/todos/{todo_id}": {
@@ -410,6 +486,25 @@
   },
   "components": {
     "schemas": {
+      "BulkCreate": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TodoCreate"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "description": "Up to 100 todos to create."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "BulkCreate"
+      },
       "Error": {
         "properties": {
           "detail": {
@@ -650,7 +745,7 @@
     "securitySchemes": {
       "APIKeyHeader": {
         "type": "apiKey",
-        "description": "Your API key. For the demo, use `demo-key`.",
+        "description": "Your API key. For the demo, use `demo-key`. Signed-in docs readers get their plan's key prefilled (`partner-demo-key` or `enterprise-demo-key`).",
         "in": "header",
         "name": "X-API-Key"
       }

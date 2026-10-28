@@ -2,8 +2,14 @@
 
 Everything lives in a Python dict, so data resets when the server restarts.
 
-Auth:  send the header  X-API-Key: <key>.  The demo key is `demo-key`
-       (override it with the TODO_API_KEY environment variable).
+Auth:  send the header  X-API-Key: <key>.  The demo keys are public on purpose:
+         demo-key             standard  (override with TODO_API_KEY)
+         partner-demo-key     partner   (override with TODO_PARTNER_API_KEY)
+         enterprise-demo-key  enterprise, unlocks POST /todos/bulk
+                              (override with TODO_ENTERPRISE_API_KEY)
+
+Also served: GraphQL at /graphql (todo_graphql.py) and a WebSocket stream of
+todo events at /ws/events (events.py, documented in docs/asyncapi.yaml).
 
 Run it:  uvicorn main:app --reload
 """
@@ -16,23 +22,43 @@ from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from events import EventedStore, events_app
+from todo_graphql import graphql_app
+
 # --------------------------------------------------------------------------- #
 # Auth: one API key in a header
 # --------------------------------------------------------------------------- #
 
 API_KEY = os.environ.get("TODO_API_KEY", "demo-key")
+PARTNER_API_KEY = os.environ.get("TODO_PARTNER_API_KEY", "partner-demo-key")
+ENTERPRISE_API_KEY = os.environ.get("TODO_ENTERPRISE_API_KEY", "enterprise-demo-key")
+
+
+def key_tier(key: str | None) -> str | None:
+    """Map an API key to its plan: `standard`, `partner`, `enterprise`, or None if invalid."""
+    return {API_KEY: "standard", PARTNER_API_KEY: "partner", ENTERPRISE_API_KEY: "enterprise"}.get(key or "")
 
 # auto_error=False lets us return our own 401 (instead of FastAPI's default 403).
 api_key_header = APIKeyHeader(
     name="X-API-Key",
     auto_error=False,
-    description="Your API key. For the demo, use `demo-key`.",
+    description=(
+        "Your API key. For the demo, use `demo-key`. Signed-in docs readers get their plan's key "
+        "prefilled (`partner-demo-key` or `enterprise-demo-key`)."
+    ),
 )
 
 
-def require_api_key(key: str | None = Security(api_key_header)) -> None:
-    if key != API_KEY:
+def require_api_key(key: str | None = Security(api_key_header)) -> str:
+    tier = key_tier(key)
+    if tier is None:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    return tier
+
+
+def require_enterprise(tier: str = Depends(require_api_key)) -> None:
+    if tier != "enterprise":
+        raise HTTPException(status_code=403, detail="This endpoint needs an enterprise API key")
 
 
 # --------------------------------------------------------------------------- #
@@ -73,7 +99,7 @@ class Error(BaseModel):
 # "Database": a dict of id -> Todo
 # --------------------------------------------------------------------------- #
 
-todos: dict[int, Todo] = {}
+todos: dict[int, Todo] = EventedStore()  # a dict that broadcasts todo.* events on /ws/events
 _next_id = 1
 
 
@@ -100,7 +126,7 @@ app = FastAPI(
     summary="A tiny in-memory todo list with API-key auth.",
     description=(
         "Create, read, update and delete todos. Data is kept in memory and resets when the server restarts.\n\n"
-        "All endpoints need an `X-API-Key` header. Use `demo-key` when running the demo locally."
+        "All endpoints need an `X-API-Key` header. Use `demo-key` for the demo."
     ),
     servers=[{"url": "http://localhost:8000", "description": "Local development"}],
     dependencies=[Depends(require_api_key)],
@@ -110,10 +136,16 @@ app = FastAPI(
 )
 
 # Allow browsers to call the API from anywhere. The docs' "Try it" playground
-# sends requests straight from your browser to http://localhost:8000, so it needs CORS.
+# sends requests straight from your browser to the API, so it needs CORS.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# GraphQL and the WebSocket event stream are mounted sub-apps, so they stay out of
+# the OpenAPI spec (they have their own: docs/schema.graphql and docs/asyncapi.yaml).
+app.mount("/graphql", graphql_app)
+app.mount("/ws", events_app)
+
 UNAUTHORIZED = {401: {"model": Error, "description": "Missing or invalid API key."}}
+FORBIDDEN = {403: {"model": Error, "description": "Your API key's plan can't use this endpoint."}}
 NOT_FOUND = {404: {"model": Error, "description": "No todo with that id."}}
 
 
@@ -177,6 +209,28 @@ def create_todo(body: TodoCreate) -> Todo:
     todos[todo.id] = todo
     _next_id += 1
     return todo
+
+
+class BulkCreate(BaseModel):
+    items: list[TodoCreate] = Field(..., min_length=1, max_length=100, description="Up to 100 todos to create.")
+
+
+@app.post(
+    "/todos/bulk",
+    tags=["Todos"],
+    operation_id="bulkCreateTodos",
+    summary="Bulk create todos (Enterprise)",
+    response_model=list[Todo],
+    status_code=status.HTTP_201_CREATED,
+    responses={**UNAUTHORIZED, **FORBIDDEN},
+    dependencies=[Depends(require_enterprise)],
+    # Mintlify: only readers in the `enterprise` group see this endpoint in the docs.
+    openapi_extra={"x-mint": {"groups": ["enterprise"]}},
+)
+def bulk_create_todos(body: BulkCreate) -> list[Todo]:
+    """Create up to 100 todos in one request. **Enterprise plan only:** send an enterprise API key
+    (`enterprise-demo-key` in the demo), or the API returns `403`."""
+    return [create_todo(item) for item in body.items]
 
 
 @app.get(

@@ -1,0 +1,33 @@
+---
+title: Event stream
+description: Receive every todo change in real time over a WebSocket, documented with AsyncAPI.
+icon: bolt
+---
+
+Connect to `/ws/events` and the server pushes a JSON message for every todo that's created, updated, or deleted, whether the change came from REST, GraphQL, or the SDK.
+
+The channel reference below is generated from [`asyncapi.yaml`](https://github.com/mintlify-demo/todo-api/blob/main/docs/asyncapi.yaml), an AsyncAPI 3.0 document.
+
+## Connect
+
+Browsers can't set headers on a WebSocket, so pass your API key in the `api_key` query parameter.
+
+```javascript
+const ws = new WebSocket("ws://localhost:8000/ws/events?api_key=demo-key");
+ws.onmessage = (msg) => console.log(JSON.parse(msg.data));
+// {"type": "connection.ready", "plan": "standard", ...}
+// {"type": "todo.created", "data": {"id": 1, "title": "Write the docs", ...}, ...}
+```
+
+## Messages
+
+| Type | Direction | When |
+| --- | --- | --- |
+| `connection.ready` | Server to client | Right after you connect |
+| `todo.created` | Server to client | A todo was created |
+| `todo.updated` | Server to client | A todo was changed |
+| `todo.deleted` | Server to client | A todo was deleted (`data` is `{"id": ...}`) |
+| `ping` / `pong` | Both | Check the connection |
+| `subscribe` / `subscribed` | Both | Only receive some event types |
+
+A wrong or missing key closes the connection with code `1008`.

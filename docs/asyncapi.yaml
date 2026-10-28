@@ -1,0 +1,244 @@
+asyncapi: 3.0.0
+info:
+  title: Todo Events
+  version: 1.0.0
+  description: |
+    A WebSocket stream of changes to the Todo API. Every create, update, and delete,
+    over REST or GraphQL, is pushed to every connected client as a JSON message.
+
+    Connect to `/ws/events` and pass your API key in the `api_key` query parameter
+    (browsers can't set headers on a WebSocket). The demo key is `demo-key`.
+defaultContentType: application/json
+servers:
+  # TODO(hosting): add the hosted server (protocol: wss) here once the API is hosted.
+  local:
+    host: localhost:8000
+    protocol: ws
+    description: Local development
+    security:
+      - $ref: '#/components/securitySchemes/apiKeyQuery'
+channels:
+  todoEvents:
+    address: /ws/events
+    title: Todo events
+    description: |
+      One connection receives every todo event. Send a `subscribe` message to only
+      receive some event types, and `ping` to check the connection.
+    bindings:
+      ws:
+        query:
+          type: object
+          properties:
+            api_key:
+              type: string
+              description: Your API key, for example `demo-key`.
+          required:
+            - api_key
+    messages:
+      connectionReady:
+        $ref: '#/components/messages/connectionReady'
+      todoCreated:
+        $ref: '#/components/messages/todoCreated'
+      todoUpdated:
+        $ref: '#/components/messages/todoUpdated'
+      todoDeleted:
+        $ref: '#/components/messages/todoDeleted'
+      pong:
+        $ref: '#/components/messages/pong'
+      subscribed:
+        $ref: '#/components/messages/subscribed'
+      ping:
+        $ref: '#/components/messages/ping'
+      subscribe:
+        $ref: '#/components/messages/subscribe'
+operations:
+  receiveTodoEvents:
+    action: receive
+    title: Receive todo events
+    summary: Messages the server sends to your client.
+    channel:
+      $ref: '#/channels/todoEvents'
+    messages:
+      - $ref: '#/channels/todoEvents/messages/connectionReady'
+      - $ref: '#/channels/todoEvents/messages/todoCreated'
+      - $ref: '#/channels/todoEvents/messages/todoUpdated'
+      - $ref: '#/channels/todoEvents/messages/todoDeleted'
+      - $ref: '#/channels/todoEvents/messages/subscribed'
+      - $ref: '#/channels/todoEvents/messages/pong'
+  sendClientMessages:
+    action: send
+    title: Send client messages
+    summary: Messages your client can send to the server.
+    channel:
+      $ref: '#/channels/todoEvents'
+    messages:
+      - $ref: '#/channels/todoEvents/messages/ping'
+      - $ref: '#/channels/todoEvents/messages/subscribe'
+components:
+  securitySchemes:
+    apiKeyQuery:
+      type: httpApiKey
+      name: api_key
+      in: query
+      description: Your Todo API key. For the demo, use `demo-key`.
+  schemas:
+    Timestamp:
+      type: string
+      format: date-time
+      description: When the server sent the message (UTC).
+      examples:
+        - '2026-01-15T09:30:00Z'
+    Todo:
+      type: object
+      description: The todo after the change, in the same shape as the REST API returns.
+      required: [id, title, completed, created_at]
+      properties:
+        id:
+          type: integer
+          examples: [1]
+        title:
+          type: string
+          examples: [Write the docs]
+        completed:
+          type: boolean
+          examples: [false]
+        created_at:
+          type: string
+          format: date-time
+          examples: ['2026-01-15T09:30:00Z']
+    EventType:
+      type: string
+      enum: [todo.created, todo.updated, todo.deleted]
+  messages:
+    connectionReady:
+      name: connection.ready
+      title: Connection ready
+      summary: Sent once, right after the server accepts the connection.
+      payload:
+        type: object
+        required: [type, plan, timestamp]
+        properties:
+          type:
+            type: string
+            const: connection.ready
+          plan:
+            type: string
+            enum: [standard, partner, enterprise]
+            description: The plan of the API key you connected with.
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    todoCreated:
+      name: todo.created
+      title: Todo created
+      summary: A todo was created.
+      payload:
+        type: object
+        required: [type, data, timestamp]
+        properties:
+          type:
+            type: string
+            const: todo.created
+          data:
+            $ref: '#/components/schemas/Todo'
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    todoUpdated:
+      name: todo.updated
+      title: Todo updated
+      summary: A todo was changed.
+      payload:
+        type: object
+        required: [type, data, timestamp]
+        properties:
+          type:
+            type: string
+            const: todo.updated
+          data:
+            $ref: '#/components/schemas/Todo'
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    todoDeleted:
+      name: todo.deleted
+      title: Todo deleted
+      summary: A todo was deleted.
+      payload:
+        type: object
+        required: [type, data, timestamp]
+        properties:
+          type:
+            type: string
+            const: todo.deleted
+          data:
+            type: object
+            required: [id]
+            properties:
+              id:
+                type: integer
+                examples: [1]
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    subscribed:
+      name: subscribed
+      title: Subscribed
+      summary: Confirms which event types this connection now receives.
+      payload:
+        type: object
+        required: [type, events, timestamp]
+        properties:
+          type:
+            type: string
+            const: subscribed
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventType'
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    pong:
+      name: pong
+      title: Pong
+      summary: Reply to a ping.
+      payload:
+        type: object
+        required: [type, timestamp]
+        properties:
+          type:
+            type: string
+            const: pong
+          timestamp:
+            $ref: '#/components/schemas/Timestamp'
+    ping:
+      name: ping
+      title: Ping
+      summary: Check that the connection is alive. The server replies with `pong`.
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type:
+            type: string
+            const: ping
+      examples:
+        - name: ping
+          payload:
+            type: ping
+    subscribe:
+      name: subscribe
+      title: Subscribe
+      summary: Only receive some event types. Send an empty list to receive all of them again.
+      payload:
+        type: object
+        required: [type, events]
+        properties:
+          type:
+            type: string
+            const: subscribe
+          events:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventType'
+      examples:
+        - name: Only creates and deletes
+          payload:
+            type: subscribe
+            events: [todo.created, todo.deleted]

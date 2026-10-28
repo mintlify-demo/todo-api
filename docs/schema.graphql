@@ -1,0 +1,74 @@
+"""Fields for a new todo."""
+input CreateTodoInput {
+  """What needs doing (1 to 200 characters)."""
+  title: String!
+
+  """Whether the todo is already done."""
+  completed: Boolean! = false
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+"""Create, update and delete todos."""
+type Mutation {
+  """Create a todo."""
+  createTodo(input: CreateTodoInput!): Todo!
+
+  """Update a todo. Returns null if it doesn't exist."""
+  updateTodo(id: Int!, input: UpdateTodoInput!): Todo
+
+  """Delete a todo. Returns true if it existed."""
+  deleteTodo(id: Int!): Boolean!
+}
+
+"""Read todos."""
+type Query {
+  """List todos, oldest first, one page at a time."""
+  todos(page: Int! = 1, pageSize: Int! = 10, completed: Boolean = null): TodoPage!
+
+  """Get one todo by id. Returns null if it doesn't exist."""
+  todo(id: Int!): Todo
+}
+
+"""A todo item."""
+type Todo {
+  """Unique id, assigned by the server."""
+  id: Int!
+
+  """What needs doing."""
+  title: String!
+
+  """Whether the todo is done."""
+  completed: Boolean!
+
+  """When the todo was created (UTC)."""
+  createdAt: DateTime!
+}
+
+"""One page of todos."""
+type TodoPage {
+  """The todos on this page."""
+  items: [Todo!]!
+
+  """Total todos matching the filter."""
+  total: Int!
+
+  """The current page (starts at 1)."""
+  page: Int!
+
+  """Items per page."""
+  pageSize: Int!
+
+  """How many pages there are."""
+  totalPages: Int!
+}
+
+"""Fields to change. Fields you leave out are unchanged."""
+input UpdateTodoInput {
+  """New title."""
+  title: String = null
+
+  """New completed state."""
+  completed: Boolean = null
+}

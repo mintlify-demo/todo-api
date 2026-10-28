@@ -4,7 +4,19 @@ description: A small CRUD API with API-key auth, pagination, and a deprecated en
 icon: list-check
 ---
 
-The Todo API stores todos in memory. It's the demo to show **authentication**, **pagination**, and **deprecation** in a real API reference.
+{user.name ? <>Welcome back, **{user.name}**.</> : <>Welcome.</>} The Todo API stores todos in memory. It's the demo to show **authentication**, **pagination**, and **deprecation** in a real API reference, plus a **GraphQL** API, a **WebSocket** event stream, and a **Python SDK** generated from code.
+
+<Visibility for={{ groups: ["enterprise"] }}>
+  <Check>
+    You're on the **Enterprise** plan. Your API key is already filled in on every endpoint page, and you can use [bulk create](/todo-api/guides/enterprise-bulk-import).
+  </Check>
+</Visibility>
+
+<Visibility for={{ groups: ["partner"] }}>
+  <Info>
+    You're signed in as a **partner**. Your partner API key is filled in on every endpoint page. See [partner integrations](/todo-api/guides/partner-integrations) for the event stream.
+  </Info>
+</Visibility>
 
 <CardGroup cols={3}>
   <Card title="Quickstart" icon="rocket" href="/todo-api/quickstart">
@@ -18,6 +30,18 @@ The Todo API stores todos in memory. It's the demo to show **authentication**, *
   </Card>
 </CardGroup>
 
+<CardGroup cols={3}>
+  <Card title="GraphQL API" icon="diagram-project" href="/todo-api/graphql/overview">
+    The same todos over GraphQL.
+  </Card>
+  <Card title="Event stream" icon="bolt" href="/todo-api/events/overview">
+    Live changes over a WebSocket.
+  </Card>
+  <Card title="Python SDK" icon="python" href="/todo-api/sdk/overview">
+    `TodoClient`, generated reference.
+  </Card>
+</CardGroup>
+
 ## Endpoints
 
 | Method | Path | What it does |
@@ -28,6 +52,9 @@ The Todo API stores todos in memory. It's the demo to show **authentication**, *
 | `PATCH` | `/todos/{todo_id}` | Update a todo |
 | `DELETE` | `/todos/{todo_id}` | Delete a todo |
 | `GET` | `/todos/list-all` | <Badge color="orange">Deprecated</Badge> List every todo, unpaginated |
+| `POST` | `/todos/bulk` | <Badge color="purple">Enterprise</Badge> Create up to 100 todos at once |
+| `POST` | `/graphql` | GraphQL queries and mutations |
+| `WS` | `/ws/events` | Stream of `todo.created`, `todo.updated`, `todo.deleted` |
 
 <Warning>
   Data lives in memory. Restarting the server clears every todo.

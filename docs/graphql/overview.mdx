@@ -1,0 +1,44 @@
+---
+title: GraphQL API
+description: Query and change todos over GraphQL, with a reference generated from the schema.
+icon: diagram-project
+---
+
+The Todo API also speaks GraphQL at `/graphql`. It reads and writes the same todos as the REST API, so a todo you create here shows up in `GET /todos` and on the [event stream](/todo-api/events/overview).
+
+The reference pages below are generated from [`schema.graphql`](https://github.com/mintlify-demo/todo-api/blob/main/docs/schema.graphql), which is exported from the server code with `make spec`. When the schema changes, the reference changes with it.
+
+## Send a query
+
+Send your API key in the `X-API-Key` header, the same as REST.
+
+<CodeGroup>
+```bash cURL
+curl http://localhost:8000/graphql \
+  -H "X-API-Key: demo-key" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ todos(pageSize: 5) { total items { id title completed } } }"}'
+```
+
+```graphql Query
+query {
+  todos(pageSize: 5, completed: false) {
+    total
+    items { id title completed createdAt }
+  }
+}
+```
+
+```graphql Mutation
+mutation {
+  createTodo(input: { title: "Write the docs" }) {
+    id
+    title
+  }
+}
+```
+</CodeGroup>
+
+<Tip>
+  With the API running, open `http://localhost:8000/graphql` in a browser for GraphiQL. Add `{"X-API-Key": "demo-key"}` in its **Headers** panel.
+</Tip>

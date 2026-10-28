@@ -23,7 +23,9 @@
         "pages": [
           "guides/authentication",
           "guides/pagination",
-          "guides/deprecations"
+          "guides/deprecations",
+          "guides/partner-integrations",
+          "guides/enterprise-bulk-import"
         ]
       },
       {
@@ -33,7 +35,55 @@
           "source": "openapi.json",
           "directory": "api-reference"
         }
+      },
+      {
+        "group": "GraphQL API",
+        "icon": "diagram-project",
+        "pages": [
+          "graphql/overview"
+        ],
+        "graphql": {
+          "source": "schema.graphql",
+          "directory": "graphql/reference"
+        }
+      },
+      {
+        "group": "Event stream (WebSocket)",
+        "icon": "bolt",
+        "pages": [
+          "events/overview"
+        ],
+        "asyncapi": {
+          "source": "asyncapi.yaml",
+          "directory": "events/reference"
+        }
+      },
+      {
+        "group": "Python SDK",
+        "icon": "python",
+        "pages": [
+          "sdk/overview"
+        ],
+        "sdk": {
+          "format": "sphinx",
+          "source": "sdk-artifacts/python",
+          "directory": "sdk/reference"
+        }
       }
     ]
+  },
+  "api": {
+    "playground": {
+      "display": "auth",
+      "proxy": false
+    },
+    "examples": {
+      "prefill": true,
+      "languages": [
+        "bash",
+        "python",
+        "javascript"
+      ]
+    }
   }
 }

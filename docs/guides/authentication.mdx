@@ -10,9 +10,21 @@ Every endpoint requires an API key. Send it in the `X-API-Key` header.
 curl http://localhost:8000/todos -H "X-API-Key: demo-key"
 ```
 
+## Keys by plan
+
+Each key belongs to a plan. The plan decides which endpoints the key can call.
+
+| Key | Plan | Can call |
+| --- | --- | --- |
+| `demo-key` | Standard | Every endpoint except bulk create |
+| `partner-demo-key` | Partner | Every endpoint except bulk create |
+| `enterprise-demo-key` | Enterprise | Every endpoint, including [`POST /todos/bulk`](/todo-api/guides/enterprise-bulk-import) |
+
 <Info>
-  The demo key is `demo-key`. To use a different key, set the `TODO_API_KEY` environment variable before you start the server.
+  These demo keys are public on purpose. To use different keys, set `TODO_API_KEY`, `TODO_PARTNER_API_KEY`, and `TODO_ENTERPRISE_API_KEY` before you start the server.
 </Info>
+
+{user.name ? <Tip>Signed in as **{user.name}**: the playground on every endpoint page already has your plan's key filled in.</Tip> : null}
 
 ## What happens without a key
 
@@ -24,7 +36,7 @@ A missing or wrong key returns `401`:
 
 ## In the API playground
 
-Each endpoint page in the API reference has an **Authorization** field. Enter `demo-key` there, and the playground adds the header for you.
+Each endpoint page in the API reference has an **Authorization** field. When you're signed in to the docs, it's filled in with your plan's key. Otherwise, enter `demo-key` there, and the playground adds the header for you.
 
 <ParamField header="X-API-Key" type="string" required>
   Your API key. For the demo, use `demo-key`.

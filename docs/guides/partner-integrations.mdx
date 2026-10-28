@@ -1,0 +1,41 @@
+---
+title: Partner integrations
+description: Keep a partner app in sync with the Todo API's event stream.
+icon: handshake
+groups: ["partner", "enterprise"]
+---
+
+<Note>
+  This page is for readers in the **partner** or **enterprise** group. Other signed-in readers get a 404.
+</Note>
+
+{user.name ? <>Welcome, {user.name}.</> : null} Partners usually mirror todos into their own app. Instead of polling `GET /todos`, open one WebSocket to the [event stream](/todo-api/events/overview) and apply each change as it arrives.
+
+<Steps>
+  <Step title="Load the current state">
+    Page through `GET /todos` once, or call `TodoClient.iter_all()` from the [Python SDK](/todo-api/sdk/overview).
+  </Step>
+  <Step title="Open the stream">
+    Connect to `ws://localhost:8000/ws/events?api_key=partner-demo-key`. The first message is `connection.ready` with your plan.
+  </Step>
+  <Step title="Apply changes">
+    Upsert the todo on `todo.created` and `todo.updated`, and remove it on `todo.deleted`.
+  </Step>
+</Steps>
+
+```python
+import asyncio, json, websockets
+
+async def mirror():
+    url = "ws://localhost:8000/ws/events?api_key=partner-demo-key"
+    async with websockets.connect(url) as ws:
+        async for raw in ws:
+            event = json.loads(raw)
+            print(event["type"], event.get("data"))
+
+asyncio.run(mirror())
+```
+
+<Tip>
+  Send `{"type": "subscribe", "events": ["todo.created"]}` to receive only the events you need.
+</Tip>
