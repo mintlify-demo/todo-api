@@ -94,6 +94,11 @@ class TodoUpdate(BaseModel):
 class Todo(TodoCreate):
     id: int = Field(..., description="Unique id, assigned by the server.", examples=[1])
     created_at: datetime = Field(..., description="When the todo was created (UTC).", examples=["2026-01-15T09:30:00Z"])
+    completed_at: datetime | None = Field(
+        None,
+        description="When the todo was completed with `POST /todos/{todo_id}/complete` (UTC). `null` until then.",
+        examples=["2026-01-16T17:05:00Z"],
+    )
 
 
 class TodoPage(BaseModel):
@@ -287,6 +292,28 @@ def update_todo(todo_id: int, body: TodoUpdate) -> Todo:
     """Change a todo's `title`, `completed`, `priority`, and/or `due_date`. Fields you leave out are unchanged."""
     todo = get_or_404(todo_id)
     updated = todo.model_copy(update=body.model_dump(exclude_unset=True))
+    todos[todo_id] = updated
+    return updated
+
+
+@app.post(
+    "/todos/{todo_id}/complete",
+    tags=["Todos"],
+    operation_id="completeTodo",
+    summary="Mark a todo as complete",
+    response_model=Todo,
+    responses={**UNAUTHORIZED, **NOT_FOUND},
+)
+def complete_todo(todo_id: int) -> Todo:
+    """Mark a todo as done and record `completed_at`.
+
+    Safe to call more than once: completing a todo that is already complete
+    keeps its original `completed_at`.
+    """
+    todo = get_or_404(todo_id)
+    if todo.completed and todo.completed_at is not None:
+        return todo
+    updated = todo.model_copy(update={"completed": True, "completed_at": datetime.now(timezone.utc)})
     todos[todo_id] = updated
     return updated
 

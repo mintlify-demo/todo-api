@@ -125,3 +125,18 @@ def test_overdue_filter(client):
 
 def test_invalid_due_date_is_rejected(client):
     assert client.post("/todos", json={"title": "x", "due_date": "tomorrow"}).status_code == 422
+
+
+def test_complete_endpoint(client):
+    make(client)
+    assert client.get("/todos/1").json()["completed_at"] is None
+    r = client.post("/todos/1/complete")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["completed"] is True and body["completed_at"] is not None
+    # Idempotent: a second call keeps the original timestamp.
+    assert client.post("/todos/1/complete").json()["completed_at"] == body["completed_at"]
+
+
+def test_complete_missing_is_404(client):
+    assert client.post("/todos/42/complete").status_code == 404
