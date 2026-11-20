@@ -15,7 +15,8 @@ Run it:  uvicorn main:app --reload
 """
 import math
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from enum import Enum
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Response, Security, status
 from fastapi.security import APIKeyHeader
@@ -66,9 +67,19 @@ def require_enterprise(tier: str = Depends(require_api_key)) -> None:
 # --------------------------------------------------------------------------- #
 
 
+class Priority(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+
+
 class TodoCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="What needs doing.", examples=["Write the docs"])
     completed: bool = Field(False, description="Whether the todo is already done.", examples=[False])
+    priority: Priority = Field(
+        Priority.medium, description="How important the todo is: `low`, `medium` (default), or `high`.", examples=["high"]
+    )
+    due_date: date | None = Field(None, description="Optional date the todo is due (YYYY-MM-DD).", examples=["2026-11-15"])
 
 
 class TodoUpdate(BaseModel):
@@ -76,6 +87,8 @@ class TodoUpdate(BaseModel):
 
     title: str | None = Field(None, min_length=1, max_length=200, description="New title.", examples=["Ship the docs"])
     completed: bool | None = Field(None, description="New completed state.", examples=[True])
+    priority: Priority | None = Field(None, description="New priority.", examples=["low"])
+    due_date: date | None = Field(None, description="New due date (YYYY-MM-DD). Send `null` to clear it.", examples=["2026-11-30"])
 
 
 class Todo(TodoCreate):
@@ -108,6 +121,12 @@ def reset_store() -> None:
     global _next_id
     todos.clear()
     _next_id = 1
+
+
+def is_overdue(todo: Todo) -> bool:
+    """A todo is overdue when it is not done and its due date has passed."""
+    today = datetime.now(timezone.utc).date()
+    return not todo.completed and todo.due_date is not None and todo.due_date < today
 
 
 def get_or_404(todo_id: int) -> Todo:
@@ -161,9 +180,19 @@ def list_todos(
     page: int = Query(1, ge=1, description="Page number, starting at 1."),
     page_size: int = Query(10, ge=1, le=100, description="Items per page (1 to 100)."),
     completed: bool | None = Query(None, description="Only return todos with this completed state."),
+    priority: Priority | None = Query(None, description="Only return todos with this priority."),
+    overdue: bool | None = Query(
+        None, description="`true` returns only incomplete todos whose `due_date` is before today (UTC)."
+    ),
 ) -> TodoPage:
-    """Return one page of todos, oldest first. Filter with `completed`."""
-    matching = [t for t in todos.values() if completed is None or t.completed == completed]
+    """Return one page of todos, oldest first. Filter with `completed`, `priority`, and `overdue`."""
+    matching = [
+        t
+        for t in todos.values()
+        if (completed is None or t.completed == completed)
+        and (priority is None or t.priority == priority)
+        and (overdue is None or is_overdue(t) == overdue)
+    ]
     start = (page - 1) * page_size
     return TodoPage(
         items=matching[start : start + page_size],
@@ -255,7 +284,7 @@ def get_todo(todo_id: int) -> Todo:
     responses={**UNAUTHORIZED, **NOT_FOUND},
 )
 def update_todo(todo_id: int, body: TodoUpdate) -> Todo:
-    """Change a todo's `title` and/or `completed`. Fields you leave out are unchanged."""
+    """Change a todo's `title`, `completed`, `priority`, and/or `due_date`. Fields you leave out are unchanged."""
     todo = get_or_404(todo_id)
     updated = todo.model_copy(update=body.model_dump(exclude_unset=True))
     todos[todo_id] = updated

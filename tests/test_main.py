@@ -87,3 +87,41 @@ def test_deprecated_list_all_still_works(client):
 
 def test_list_all_is_marked_deprecated_in_spec():
     assert app.openapi()["paths"]["/todos/list-all"]["get"]["deprecated"] is True
+
+
+def test_priority_defaults_to_medium(client):
+    assert make(client)["priority"] == "medium"
+
+
+def test_create_with_priority_and_filter(client):
+    make(client, "Low", priority="low")
+    make(client, "High", priority="high")
+    r = client.get("/todos", params={"priority": "high"})
+    assert [t["title"] for t in r.json()["items"]] == ["High"]
+
+
+def test_patch_priority(client):
+    make(client)
+    assert client.patch("/todos/1", json={"priority": "high"}).json()["priority"] == "high"
+
+
+def test_invalid_priority_is_rejected(client):
+    assert client.post("/todos", json={"title": "x", "priority": "urgent"}).status_code == 422
+
+
+def test_due_date_round_trips(client):
+    assert make(client, due_date="2026-11-15")["due_date"] == "2026-11-15"
+    assert make(client, "No date")["due_date"] is None
+
+
+def test_overdue_filter(client):
+    make(client, "Late", due_date="2000-01-01")
+    make(client, "Future", due_date="2999-01-01")
+    make(client, "Done late", due_date="2000-01-01", completed=True)
+    make(client, "No date")
+    r = client.get("/todos", params={"overdue": True})
+    assert [t["title"] for t in r.json()["items"]] == ["Late"]
+
+
+def test_invalid_due_date_is_rejected(client):
+    assert client.post("/todos", json={"title": "x", "due_date": "tomorrow"}).status_code == 422
