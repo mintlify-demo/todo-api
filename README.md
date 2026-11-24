@@ -29,8 +29,10 @@ TODO(hosting): the API will be hosted with Mintlify's internal tooling (details 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload        # http://localhost:8000  (Swagger UI at /docs)
+python serve.py                  # http://localhost:8000  (Swagger UI at /docs)
 ```
+
+`serve.py` listens on port 8000. Set `PORT` to change it, for example `PORT=9000 python serve.py`. `uvicorn main:app --reload` still works too.
 
 ```bash
 curl -X POST localhost:8000/todos -H 'X-API-Key: demo-key' \
