@@ -78,6 +78,17 @@ def test_filter_by_completed(client):
     assert done["total"] == 1
 
 
+def test_filter_by_title_query(client):
+    make(client, "Write the docs")
+    make(client, "Buy coffee")
+    make(client, "Write the changelog")
+    found = client.get("/todos", params={"q": "write"}).json()
+    assert [t["title"] for t in found["items"]] == ["Write the docs", "Write the changelog"]
+    assert found["total"] == 2
+    none = client.get("/todos", params={"q": "xyz"}).json()
+    assert none["items"] == [] and none["total"] == 0
+
+
 def test_deprecated_list_all_still_works(client):
     make(client, "a")
     make(client, "b")

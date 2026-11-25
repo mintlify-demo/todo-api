@@ -161,9 +161,20 @@ def list_todos(
     page: int = Query(1, ge=1, description="Page number, starting at 1."),
     page_size: int = Query(10, ge=1, le=100, description="Items per page (1 to 100)."),
     completed: bool | None = Query(None, description="Only return todos with this completed state."),
+    q: str | None = Query(
+        None,
+        min_length=1,
+        max_length=200,
+        description="Only return todos whose title contains this string (case-insensitive).",
+    ),
 ) -> TodoPage:
-    """Return one page of todos, oldest first. Filter with `completed`."""
-    matching = [t for t in todos.values() if completed is None or t.completed == completed]
+    """Return one page of todos, oldest first. Filter with `completed` and optional title search `q`."""
+    matching = [
+        t
+        for t in todos.values()
+        if (completed is None or t.completed == completed)
+        and (q is None or q.lower() in t.title.lower())
+    ]
     start = (page - 1) * page_size
     return TodoPage(
         items=matching[start : start + page_size],
